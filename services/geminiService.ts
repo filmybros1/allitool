@@ -1,6 +1,9 @@
 
 import { GoogleGenAI } from "@google/genai";
 
+// Satisfy TypeScript compiler for process.env usage
+declare var process: any;
+
 /**
  * GeminiService handles interactions with the Google GenAI API.
  * It uses gemini-3-flash-preview for document analysis and chat.
