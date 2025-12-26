@@ -1,5 +1,11 @@
 
 declare const PDFLib: any;
+declare const pdfjsLib: any;
+
+// Initialize PDF.js worker
+if (typeof window !== 'undefined' && 'pdfjsLib' in window) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+}
 
 export class PDFService {
   private static parsePageRange(rangeStr: string, maxPages: number): number[] {
@@ -88,28 +94,53 @@ export class PDFService {
     return await pdfDoc.save();
   }
 
-  static async splitPDF(file: File, ranges: { start: number, end: number }[]): Promise<Uint8Array[]> {
+  static async splitPDF(file: File, selection: string): Promise<Uint8Array> {
     const { PDFDocument } = PDFLib;
     const arrayBuffer = await file.arrayBuffer();
     const sourcePdf = await PDFDocument.load(arrayBuffer);
-    const results: Uint8Array[] = [];
-
-    for (const range of ranges) {
-      const newPdf = await PDFDocument.create();
-      const indices = [];
-      for (let i = range.start - 1; i < range.end; i++) {
-        indices.push(i);
-      }
-      const copiedPages = await newPdf.copyPages(sourcePdf, indices);
-      copiedPages.forEach((page: any) => newPdf.addPage(page));
-      results.push(await newPdf.save());
-    }
-
-    return results;
+    const pageCount = sourcePdf.getPageCount();
+    
+    const indicesToCopy = this.parsePageRange(selection, pageCount);
+    const newPdf = await PDFDocument.create();
+    const copiedPages = await newPdf.copyPages(sourcePdf, indicesToCopy);
+    copiedPages.forEach((page: any) => newPdf.addPage(page));
+    
+    return await newPdf.save();
   }
 
-  static downloadBlob(data: Uint8Array, filename: string, mimeType: string = 'application/pdf') {
-    const blob = new Blob([data.buffer], { type: mimeType });
+  static async compressPDF(file: File): Promise<Uint8Array> {
+    const { PDFDocument } = PDFLib;
+    const arrayBuffer = await file.arrayBuffer();
+    // Simply loading and re-saving with pdf-lib often reduces file size by optimizing the object structure and removing redundant metadata
+    const pdfDoc = await PDFDocument.load(arrayBuffer);
+    return await pdfDoc.save({ useObjectStreams: true });
+  }
+
+  static async pdfToImages(file: File): Promise<Blob[]> {
+    const arrayBuffer = await file.arrayBuffer();
+    const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+    const pdf = await loadingTask.promise;
+    const images: Blob[] = [];
+
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const viewport = page.getViewport({ scale: 2.0 }); // Higher scale for better quality
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+
+      if (context) {
+        await page.render({ canvasContext: context, viewport }).promise;
+        const blob = await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b!), 'image/jpeg', 0.9));
+        images.push(blob);
+      }
+    }
+    return images;
+  }
+
+  static downloadBlob(data: Uint8Array | Blob, filename: string, mimeType: string = 'application/pdf') {
+    const blob = data instanceof Blob ? data : new Blob([data.buffer], { type: mimeType });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
