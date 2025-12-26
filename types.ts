@@ -6,7 +6,10 @@ export enum ToolType {
   AI_SUMMARY = 'ai-summary',
   IMAGE_TO_PDF = 'img-to-pdf',
   PDF_TO_IMG = 'pdf-to-img',
-  COMPRESS = 'compress'
+  COMPRESS = 'compress',
+  IMG_COMPRESS = 'img-compress',
+  JPG_TO_PNG = 'jpg-to-png',
+  PNG_TO_JPG = 'png-to-jpg'
 }
 
 export interface ToolMetadata {

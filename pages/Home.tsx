@@ -16,18 +16,18 @@ const Home: React.FC = () => {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-600"></span>
           </span>
-          Next-Gen PDF Workspace
+          Next-Gen Document Workspace
         </div>
         <h1 className="text-6xl md:text-8xl font-[900] text-slate-900 mb-8 tracking-tighter leading-[0.9]">
-          The only PDF tool <br/>
+          The only toolset <br/>
           <span className="text-indigo-600">you'll ever need.</span>
         </h1>
         <p className="text-xl text-slate-500 max-w-2xl mx-auto mb-12 font-medium">
-          AlliTool streamlines your document workflow with a professional suite of tools and 
-          unprecedented AI intelligence. Simple, secure, and fast.
+          AlliTool streamlines your document workflow with a professional suite of PDF and image tools 
+          powered by industry-leading AI intelligence.
         </p>
 
-        <div className="flex flex-wrap justify-center gap-2 p-1.5 bg-slate-100 rounded-2xl">
+        <div id="tools-section" className="flex flex-wrap justify-center gap-2 p-1.5 bg-slate-100 rounded-2xl scroll-mt-28">
           {['all', 'organize', 'convert', 'optimize', 'ai'].map((cat) => (
             <button
               key={cat}
@@ -55,11 +55,17 @@ const Home: React.FC = () => {
           <h2 className="text-4xl md:text-5xl font-extrabold mb-6 tracking-tight">Ready to transform your workflow?</h2>
           <p className="text-slate-400 text-lg mb-10 max-w-xl mx-auto">Join 50,000+ professionals who trust AlliTool for their daily document tasks.</p>
           <div className="flex flex-wrap justify-center gap-4">
-            <button className="bg-white text-slate-900 px-8 py-4 rounded-2xl font-bold hover:bg-slate-100 transition-colors shadow-xl">Get Started Now</button>
+            <button 
+              onClick={() => {
+                document.getElementById('tools-section')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="bg-white text-slate-900 px-8 py-4 rounded-2xl font-bold hover:bg-slate-100 transition-all shadow-xl active:scale-95"
+            >
+              Explore Tools
+            </button>
             <button className="bg-slate-800 text-white px-8 py-4 rounded-2xl font-bold hover:bg-slate-700 transition-colors">Contact Sales</button>
           </div>
         </div>
-        {/* Abstract background shapes */}
         <div className="absolute top-0 left-0 w-64 h-64 bg-indigo-500 rounded-full blur-[120px] opacity-20 -translate-x-1/2 -translate-y-1/2"></div>
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-rose-500 rounded-full blur-[120px] opacity-10 translate-x-1/2 translate-y-1/2"></div>
       </div>

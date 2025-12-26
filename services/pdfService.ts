@@ -29,7 +29,6 @@ export class PDFService {
       }
     }
 
-    // Default to all pages if selection resulted in nothing valid
     return pages.size > 0 
       ? Array.from(pages).sort((a, b) => a - b)
       : Array.from({ length: maxPages }, (_, i) => i);
@@ -50,6 +49,29 @@ export class PDFService {
     }
 
     return await mergedPdf.save();
+  }
+
+  static async imagesToPDF(files: File[]): Promise<Uint8Array> {
+    const { PDFDocument } = PDFLib;
+    const pdfDoc = await PDFDocument.create();
+
+    for (const file of files) {
+      const arrayBuffer = await file.arrayBuffer();
+      const isPng = file.type === 'image/png';
+      const image = isPng 
+        ? await pdfDoc.embedPng(arrayBuffer)
+        : await pdfDoc.embedJpg(arrayBuffer);
+
+      const page = pdfDoc.addPage([image.width, image.height]);
+      page.drawImage(image, {
+        x: 0,
+        y: 0,
+        width: image.width,
+        height: image.height,
+      });
+    }
+
+    return await pdfDoc.save();
   }
 
   static async rotatePDF(file: File, degrees: number): Promise<Uint8Array> {
