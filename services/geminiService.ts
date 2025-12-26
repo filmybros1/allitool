@@ -1,76 +1,90 @@
 
 import { GoogleGenAI } from "@google/genai";
 
-// Satisfy TypeScript compiler for process.env usage
 declare var process: any;
 
-/**
- * GeminiService handles interactions with the Google GenAI API.
- * It uses gemini-3-flash-preview for document analysis and chat.
- */
 export class GeminiService {
-  // Guideline: API key is obtained directly from process.env.API_KEY.
+  /**
+   * Efficiently converts a File object to a base64 string.
+   */
+  private static async fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        const base64String = result.split(',')[1];
+        resolve(base64String);
+      };
+      reader.onerror = (error) => reject(error);
+      reader.readAsDataURL(file);
+    });
+  }
 
   static async analyzeDocument(file: File): Promise<string> {
-    // Fix: Create a new GoogleGenAI instance right before making an API call to ensure latest key
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const model = 'gemini-3-flash-preview';
+    const modelName = 'gemini-3-flash-preview';
     
-    const arrayBuffer = await file.arrayBuffer();
-    const base64 = btoa(
-      new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
-    );
-
     try {
-      // Fix: Use correct content structure { parts: [...] }
+      const base64 = await this.fileToBase64(file);
+      
       const response = await ai.models.generateContent({
-        model,
+        model: modelName,
         contents: {
           parts: [
-            { text: "Please provide a detailed summary of this PDF document. Identify the main topics, key points, and any action items mentioned." },
-            { inlineData: { mimeType: 'application/pdf', data: base64 } }
+            { text: "Analyze the following document and provide a comprehensive summary. Highlight the primary objective, secondary key points, and list any actionable items or conclusions found. If it's a short document, be concise but thorough. Use a professional and clear tone." },
+            { 
+              inlineData: { 
+                mimeType: file.type || 'application/pdf', 
+                data: base64 
+              } 
+            }
           ]
         },
         config: {
-          temperature: 0.7,
-          topP: 0.95,
+          temperature: 0.4, // Lower temperature for more focused summaries
+          topP: 0.8,
         }
       });
 
-      // Fix: response.text is a property, not a method
-      return response.text || "I'm sorry, I couldn't generate a summary for this document.";
-    } catch (error) {
-      console.error("Gemini AI error:", error);
-      return "An error occurred while analyzing the document with AI.";
+      if (!response.text) {
+        throw new Error("Empty response from Gemini");
+      }
+
+      return response.text;
+    } catch (error: any) {
+      console.error("Gemini AI Analysis Error:", error);
+      if (error.message?.includes("API_KEY")) {
+        return "Error: AI services are currently unavailable due to an invalid configuration. Please contact support.";
+      }
+      return "I encountered an error while trying to process this document. This usually happens with very large files or unsupported formats. Please try a smaller file.";
     }
   }
 
   static async chatWithDocument(file: File, query: string): Promise<string> {
-    // Fix: Create a new GoogleGenAI instance right before making an API call
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const model = 'gemini-3-flash-preview';
-    const arrayBuffer = await file.arrayBuffer();
-    const base64 = btoa(
-      new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
-    );
+    const modelName = 'gemini-3-flash-preview';
 
     try {
-      // Fix: Use correct content structure { parts: [...] }
+      const base64 = await this.fileToBase64(file);
       const response = await ai.models.generateContent({
-        model,
+        model: modelName,
         contents: {
           parts: [
-            { text: `Based on the provided PDF document, answer the following question: ${query}` },
-            { inlineData: { mimeType: 'application/pdf', data: base64 } }
+            { text: `CONTEXT: You are a professional document assistant. Answer the following user question based strictly on the provided document content. QUESTION: ${query}` },
+            { 
+              inlineData: { 
+                mimeType: file.type || 'application/pdf', 
+                data: base64 
+              } 
+            }
           ]
         }
       });
 
-      // Fix: response.text is a property, not a method
-      return response.text || "I don't have enough information to answer that.";
+      return response.text || "I'm sorry, I couldn't find an answer to that in the document.";
     } catch (error) {
-      console.error("Gemini AI chat error:", error);
-      return "AI failed to process your query.";
+      console.error("Gemini AI Chat Error:", error);
+      return "I failed to process your query against the document. Please try rephrasing your question.";
     }
   }
 }
