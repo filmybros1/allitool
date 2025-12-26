@@ -8,6 +8,10 @@ const Home: React.FC = () => {
 
   const filteredTools = TOOLS.filter(tool => filter === 'all' || tool.category === filter);
 
+  const scrollToTools = () => {
+    document.getElementById('tools-section')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-20 lg:px-8">
       <div className="flex flex-col items-center text-center mb-24">
@@ -53,17 +57,14 @@ const Home: React.FC = () => {
       <div className="mt-40 p-12 bg-slate-900 rounded-[3rem] text-center text-white overflow-hidden relative">
         <div className="relative z-10">
           <h2 className="text-4xl md:text-5xl font-extrabold mb-6 tracking-tight">Ready to transform your workflow?</h2>
-          <p className="text-slate-400 text-lg mb-10 max-w-xl mx-auto">Join 50,000+ professionals who trust AlliTool for their daily document tasks.</p>
+          <p className="text-slate-400 text-lg mb-10 max-w-xl mx-auto">Experience the professional workspace built for speed and privacy.</p>
           <div className="flex flex-wrap justify-center gap-4">
             <button 
-              onClick={() => {
-                document.getElementById('tools-section')?.scrollIntoView({ behavior: 'smooth' });
-              }}
-              className="bg-white text-slate-900 px-8 py-4 rounded-2xl font-bold hover:bg-slate-100 transition-all shadow-xl active:scale-95"
+              onClick={scrollToTools}
+              className="bg-white text-slate-900 px-10 py-4 rounded-2xl font-bold hover:bg-slate-100 transition-all shadow-xl active:scale-95"
             >
-              Explore Tools
+              Explore All Tools
             </button>
-            <button className="bg-slate-800 text-white px-8 py-4 rounded-2xl font-bold hover:bg-slate-700 transition-colors">Contact Sales</button>
           </div>
         </div>
         <div className="absolute top-0 left-0 w-64 h-64 bg-indigo-500 rounded-full blur-[120px] opacity-20 -translate-x-1/2 -translate-y-1/2"></div>
