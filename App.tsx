@@ -13,7 +13,8 @@ const App: React.FC = () => {
     <HashRouter>
       <div className="min-h-screen flex flex-col bg-slate-50">
         <Navbar />
-        <main className="flex-grow">
+        {/* Added pt-16 to handle fixed navbar spacing */}
+        <main className="flex-grow pt-16">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />

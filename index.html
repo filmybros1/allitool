@@ -17,8 +17,19 @@
       letter-spacing: -0.01em;
     }
     .glass {
-      background: rgba(255, 255, 255, 0.8);
-      backdrop-filter: blur(12px);
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+    }
+    .glass-dark {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(30px);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+    .glass-modern {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(25px) saturate(180%);
+      -webkit-backdrop-filter: blur(25px) saturate(180%);
       border: 1px solid rgba(255, 255, 255, 0.4);
     }
     .bento-grid {
@@ -47,6 +58,31 @@
     .tool-card-hover:hover {
       transform: translateY(-8px) scale(1.02);
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+    }
+    
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 10px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 10px;
+      border: 3px solid #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* Animated entry */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-up {
+      animation: fadeUp 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
     }
   </style>
 <script type="importmap">
