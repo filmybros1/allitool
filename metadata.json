@@ -1,0 +1,7 @@
+{
+  "name": "AlliTool - Ultimate PDF & Document Assistant",
+  "description": "A comprehensive, high-performance PDF management suite featuring merging, splitting, rotating, and advanced AI-powered document intelligence. Effortlessly manage your documents with a professional-grade toolset.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
