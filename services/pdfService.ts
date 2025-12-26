@@ -2,14 +2,50 @@
 declare const PDFLib: any;
 
 export class PDFService {
-  static async mergePDFs(files: File[]): Promise<Uint8Array> {
+  private static parsePageRange(rangeStr: string, maxPages: number): number[] {
+    if (!rangeStr || rangeStr.trim().toLowerCase() === 'all' || rangeStr.trim() === '') {
+      return Array.from({ length: maxPages }, (_, i) => i);
+    }
+
+    const pages = new Set<number>();
+    const parts = rangeStr.split(',');
+
+    for (let part of parts) {
+      part = part.trim();
+      if (part.includes('-')) {
+        const [startStr, endStr] = part.split('-');
+        const start = parseInt(startStr.trim());
+        const end = parseInt(endStr.trim());
+        if (!isNaN(start) && !isNaN(end)) {
+          for (let i = Math.max(1, start); i <= Math.min(maxPages, end); i++) {
+            pages.add(i - 1);
+          }
+        }
+      } else {
+        const p = parseInt(part);
+        if (!isNaN(p) && p >= 1 && p <= maxPages) {
+          pages.add(p - 1);
+        }
+      }
+    }
+
+    // Default to all pages if selection resulted in nothing valid
+    return pages.size > 0 
+      ? Array.from(pages).sort((a, b) => a - b)
+      : Array.from({ length: maxPages }, (_, i) => i);
+  }
+
+  static async mergePDFs(files: { file: File, selection?: string }[]): Promise<Uint8Array> {
     const { PDFDocument } = PDFLib;
     const mergedPdf = await PDFDocument.create();
 
-    for (const file of files) {
+    for (const { file, selection } of files) {
       const arrayBuffer = await file.arrayBuffer();
       const donorPdf = await PDFDocument.load(arrayBuffer);
-      const copiedPages = await mergedPdf.copyPages(donorPdf, donorPdf.getPageIndices());
+      const pageCount = donorPdf.getPageCount();
+      
+      const indicesToCopy = this.parsePageRange(selection || '', pageCount);
+      const copiedPages = await mergedPdf.copyPages(donorPdf, indicesToCopy);
       copiedPages.forEach((page: any) => mergedPdf.addPage(page));
     }
 
@@ -51,7 +87,6 @@ export class PDFService {
   }
 
   static downloadBlob(data: Uint8Array, filename: string, mimeType: string = 'application/pdf') {
-    // Use the underlying ArrayBuffer as BlobPart to avoid Uint8Array vs BlobPart type issues
     const blob = new Blob([data.buffer], { type: mimeType });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');

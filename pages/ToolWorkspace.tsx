@@ -28,7 +28,8 @@ const ToolWorkspace: React.FC = () => {
       const newFiles = Array.from(e.target.files).map(file => ({
         id: Math.random().toString(36).substr(2, 9),
         file,
-        status: 'idle' as const
+        status: 'idle' as const,
+        pageSelection: ''
       }));
       setFiles(prev => [...prev, ...newFiles]);
     }
@@ -38,6 +39,10 @@ const ToolWorkspace: React.FC = () => {
     setFiles(prev => prev.filter(f => f.id !== id));
   };
 
+  const updatePageSelection = (id: string, selection: string) => {
+    setFiles(prev => prev.map(f => f.id === id ? { ...f, pageSelection: selection } : f));
+  };
+
   const processFiles = async () => {
     if (files.length === 0) return;
     setProcessing(true);
@@ -45,7 +50,9 @@ const ToolWorkspace: React.FC = () => {
     try {
       switch (toolId) {
         case ToolType.MERGE:
-          const mergedData = await PDFService.mergePDFs(files.map(f => f.file));
+          const mergedData = await PDFService.mergePDFs(
+            files.map(f => ({ file: f.file, selection: f.pageSelection }))
+          );
           PDFService.downloadBlob(mergedData, 'merged_allitool.pdf');
           break;
         case ToolType.ROTATE:
@@ -111,7 +118,6 @@ const ToolWorkspace: React.FC = () => {
       </div>
 
       <div className="bg-white rounded-[3rem] shadow-2xl shadow-slate-200/50 border border-slate-100 overflow-hidden flex flex-col md:flex-row min-h-[600px]">
-        {/* Sidebar for Files (Desktop) / Main Area (Empty) */}
         <div className={`flex-grow p-10 flex flex-col ${files.length > 0 ? 'bg-slate-50/50' : ''}`}>
           {files.length === 0 ? (
             <div 
@@ -147,22 +153,39 @@ const ToolWorkspace: React.FC = () => {
                 <input type="file" multiple accept=".pdf" className="hidden" ref={fileInputRef} onChange={handleFileChange} />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
                 {files.map((f) => (
-                  <div key={f.id} className="relative group bg-white rounded-3xl p-6 shadow-sm border border-slate-200 flex items-center gap-4 hover:shadow-md transition-all">
-                    <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center flex-shrink-0">
-                      <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M7 2a2 2 0 00-2 2v16a2 2 0 002 2h10a2 2 0 002-2V8l-6-6H7zm7 1.5L18.5 9H14V3.5z"/></svg>
+                  <div key={f.id} className="relative group bg-white rounded-3xl p-6 shadow-sm border border-slate-200 flex flex-col gap-4 hover:shadow-md transition-all">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center flex-shrink-0">
+                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M7 2a2 2 0 00-2 2v16a2 2 0 002 2h10a2 2 0 002-2V8l-6-6H7zm7 1.5L18.5 9H14V3.5z"/></svg>
+                      </div>
+                      <div className="overflow-hidden flex-grow">
+                        <p className="text-sm font-bold text-slate-900 truncate mb-0.5">{f.file.name}</p>
+                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">{(f.file.size / 1024 / 1024).toFixed(2)} MB</p>
+                      </div>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); removeFile(f.id); }}
+                        className="bg-slate-900 text-white rounded-xl p-1.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                      </button>
                     </div>
-                    <div className="overflow-hidden">
-                      <p className="text-sm font-bold text-slate-900 truncate mb-0.5">{f.file.name}</p>
-                      <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">{(f.file.size / 1024 / 1024).toFixed(2)} MB</p>
-                    </div>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); removeFile(f.id); }}
-                      className="absolute -top-2 -right-2 bg-slate-900 text-white rounded-xl p-1.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
+
+                    {tool.id === ToolType.MERGE && (
+                      <div className="pt-4 border-t border-slate-50">
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
+                          Include Pages (e.g. 1-3, 5)
+                        </label>
+                        <input 
+                          type="text"
+                          value={f.pageSelection}
+                          onChange={(e) => updatePageSelection(f.id, e.target.value)}
+                          placeholder="All pages"
+                          className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 text-sm font-bold text-slate-700 focus:bg-white focus:border-indigo-400 transition-all outline-none"
+                        />
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

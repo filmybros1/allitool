@@ -24,4 +24,5 @@ export interface FileData {
   previewUrl?: string;
   pages?: number;
   status: 'idle' | 'processing' | 'done' | 'error';
+  pageSelection?: string;
 }
